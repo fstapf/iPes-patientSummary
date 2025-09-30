@@ -5,13 +5,13 @@ import '../models/patient_data.dart';
 /// Serviço de API FHIR para buscar dados de pacientes
 class ApiService {
   // Para usar com proxy local (desenvolvimento):
-  static const String baseUrl = 'http://localhost:3000';
+  // static const String baseUrl = 'http://localhost:3000';
 
   // Para usar direto (Windows desktop):
   // static const String baseUrl = 'https://dev.ipes.tech:9444';
 
-  // Para usar com proxy hospedado (após deploy):
-  // static const String baseUrl = 'https://seu-proxy.onrender.com';
+  // Para usar com proxy hospedado (produção):
+  static const String baseUrl = 'https://ipes-proxy-server.onrender.com';
 
   static const String clientId = 'SQybqHk8DOEpbXoT_Jf4e9HVpj8a';
   static const String clientSecret = 'QXwmNti9h6jLu8rTuLyUKuzhbVEa';
