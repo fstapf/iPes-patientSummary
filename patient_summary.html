@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Atendimentos FHIR</title>
+
+    <!-- Verificação de autenticação antes de carregar recursos -->
+    <script>
+        (function() {
+            const isAuthenticated = sessionStorage.getItem('userLoggedIn');
+
+            if (isAuthenticated !== 'true') {
+                sessionStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div class="container" style="margin-left: 0; max-width: 100%;">
+            <div class="header">
+                <h1 class="title">Visualizador de Atendimentos FHIR</h1>
+                <div class="header-buttons">
+                    <button class="btn btn-cancel" onclick="clearData()" style="display: none;" id="clearBtn">
+                        <span class="material-icons">clear_all</span>
+                        Limpar Dados
+                    </button>
+                    <button class="btn btn-edit" onclick="logout()" id="logoutBtn">
+                        <span class="material-icons">logout</span>
+                        Sair
+                    </button>
+                </div>
+            </div>
+
+            <div id="searchArea" class="search-area">
+                <span class="material-symbols-outlined" style="font-size: 64px; color: var(--color-gray-400);">search</span>
+                <h3 style="color: var(--color-gray-700); margin: 16px 0 8px 0;">Buscar Sumário de Paciente</h3>
+                <p style="color: var(--color-gray-500); font-size: 14px; margin-bottom: 24px;">Digite o CPF do paciente para buscar o sumário</p>
+
+                <div class="search-form">
+                    <div class="input-group">
+                        <input type="text" id="cpfInput" placeholder="Digite o CPF (apenas números)" maxlength="11" class="cpf-input">
+                        <button onclick="searchPatient()" id="searchBtn" class="btn btn-new">
+                            <span class="material-icons">search</span>
+                            Buscar
+                        </button>
+                    </div>
+                    <div id="loadingIndicator" style="display: none; margin-top: 16px;">
+                        <span class="material-icons rotating">hourglass_empty</span>
+                        <span style="margin-left: 8px; color: var(--color-gray-600);">Buscando dados do paciente...</span>
+                    </div>
+                    <div id="errorMessage" style="display: none; margin-top: 16px; padding: 12px; background: #fee; color: var(--color-error); border-radius: 6px; border-left: 4px solid var(--color-error);">
+                    </div>
+                </div>
+            </div>
+
+            <div id="patientsContainer" style="display: none;">
+                <div class="dashboard-cards" id="statsCards"></div>
+                <div id="patientsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .search-area {
+            border: 2px solid var(--color-gray-200);
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            background: var(--color-white);
+            transition: all 0.3s ease;
+            margin-top: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .search-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cpf-input {
+            flex: 1;
+            max-width: 300px;
+            padding: 12px 16px;
+            border: 2px solid var(--color-gray-300);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+
+        .cpf-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .cpf-input::placeholder {
+            font-family: var(--font-family-inter);
+            letter-spacing: normal;
+        }
+
+        .rotating {
+            animation: spin 1s linear infinite;
+        }
+
+        .patient-card {
+            background: var(--color-white);
+            border-radius: 12px;
+            border: 1px solid var(--color-gray-200);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .patient-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .patient-card-header {
+            padding: 24px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-bottom: 1px solid var(--color-gray-100);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .patient-card-header:hover {
+            background: linear-gradient(135deg, #f0f2f5 0%, #ffffff 100%);
+        }
+
+        .patient-info-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .patient-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #0056b3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .patient-basic-info h3 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            color: var(--color-gray-900);
+        }
+
+        .patient-meta-info {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            color: var(--color-gray-600);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .expand-toggle {
+            transition: transform 0.3s ease;
+            color: var(--color-gray-500);
+        }
+
+        .patient-card.expanded .expand-toggle {
+            transform: rotate(180deg);
+        }
+
+        .patient-card-content {
+            display: none;
+            padding: 24px;
+            background: var(--color-white);
+        }
+
+        .patient-card.expanded .patient-card-content {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-section {
+            margin-bottom: 32px;
+        }
+
+        .info-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--color-primary);
+            border-radius: 2px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            background: var(--color-gray-50);
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--color-gray-900);
+            font-weight: 500;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table thead {
+            background: var(--color-gray-50);
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--color-gray-700);
+            border-bottom: 2px solid var(--color-gray-200);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--color-gray-800);
+            border-bottom: 1px solid var(--color-gray-100);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--color-gray-50);
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .alert-high {
+            background: #fee;
+            color: var(--color-error);
+        }
+
+        .alert-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .alert-low {
+            background: #e7f3ff;
+            color: var(--color-primary);
+        }
+
+        .medication-box {
+            background: var(--color-gray-50);
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid var(--color-primary);
+            margin-bottom: 12px;
+        }
+
+        .medication-box:last-child {
+            margin-bottom: 0;
+        }
+
+        .medication-title {
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 8px;
+        }
+
+        .medication-details {
+            color: var(--color-gray-700);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: var(--color-gray-500);
+            font-style: italic;
+        }
+    </style>
+
+    <script>
+        // Verificar autenticação antes de carregar a página
+        function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('userLoggedIn');
+
+            if (isAuthenticated !== 'true') {
+                // Não autenticado
+                sessionStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('currentUser');
+                alert('Acesso não autorizado. Você será redirecionado para a página de login.');
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Verificar autenticação ao carregar a página
+        if (!checkAuthentication()) {
+            // Parar execução se não autenticado
+            throw new Error('Acesso negado');
+        }
+
+        let patients = [];
+        let accessToken = null;
+
+        // Configurações da API
+        const API_CONFIG = {
+            baseUrl: 'https://dev.ipes.tech',
+            clientId: 'SQybqHk8DOEpbXoT_Jf4e9HVpj8a',
+            clientSecret: 'QXwmNti9h6jLu8rTuLyUKuzhbVEa'
+        };
+
+        // Adicionar listener para Enter no campo CPF
+        document.getElementById('cpfInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPatient();
+            }
+        });
+
+        // Adicionar máscara e validação ao campo CPF
+        document.getElementById('cpfInput').addEventListener('input', function(e) {
+            // Permite apenas números
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+
+        async function getAccessToken() {
+            try {
+                console.log('Buscando token de acesso...');
+
+                const credentials = btoa(`${API_CONFIG.clientId}:${API_CONFIG.clientSecret}`);
+
+                const response = await fetch(`${API_CONFIG.baseUrl}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${credentials}`,
+                        'Accept': 'application/fhir+json',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'grant_type=client_credentials'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na autenticação: ${response.status} - ${response.statusText}`);
+                }
+
+                const tokenData = await response.json();
+                console.log('Token obtido com sucesso');
+
+                return tokenData.access_token;
+
+            } catch (error) {
+                console.error('Erro ao obter token:', error);
+                throw new Error(`Falha na autenticação: ${error.message}`);
+            }
+        }
+
+        async function searchPatient() {
+            const cpf = document.getElementById('cpfInput').value.trim();
+
+            // Validar CPF
+            if (!cpf) {
+                showError('Por favor, digite um CPF');
+                return;
+            }
+
+            if (cpf.length !== 11) {
+                showError('CPF deve ter exatamente 11 dígitos');
+                return;
+            }
+
+            if (!/^\d{11}$/.test(cpf)) {
+                showError('CPF deve conter apenas números');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                hideError();
+
+                // Obter token se não tiver ou se expirou
+                if (!accessToken) {
+                    accessToken = await getAccessToken();
+                }
+
+                console.log(`Buscando dados do paciente CPF: ${cpf}`);
+
+                const response = await fetch(`${API_CONFIG.baseUrl}/ehrrunner/fhir/1.0.1/Patient/2.16.840.1.113883.13.237-${cpf}/$patientsummary`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Accept': 'application/fhir+json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    // Token expirado, tentar renovar
+                    console.log('Token expirado, renovando...');
+                    accessToken = await getAccessToken();
+
+                    // Tentar novamente com novo token
+                    const retryResponse = await fetch(`${API_CONFIG.baseUrl}/ehrrunner/fhir/1.0.1/Patient/2.16.840.1.113883.13.237-${cpf}/$patientsummary`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Accept': 'application/fhir+json'
+                        }
+                    });
+
+                    if (!retryResponse.ok) {
+                        throw new Error(`Erro na busca: ${retryResponse.status} - ${retryResponse.statusText}`);
+                    }
+
+                    const bundle = await retryResponse.json();
+                    processBundle(bundle);
+
+                } else if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Paciente não encontrado no sistema');
+                    } else {
+                        throw new Error(`Erro na busca: ${response.status} - ${response.statusText}`);
+                    }
+                } else {
+                    const bundle = await response.json();
+                    console.log('Bundle recebido:', bundle);
+                    processBundle(bundle);
+                }
+
+            } catch (error) {
+                console.error('Erro na busca:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            document.getElementById('searchBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function processBundle(bundle) {
+            console.log('processBundle iniciado com:', bundle);
+
+            const patientData = {
+                id: '',
+                encounter: {},
+                conditions: [],
+                allergies: [],
+                procedures: [],
+                medications: []
+            };
+
+            if (!bundle.entry) {
+                console.error('Bundle não tem propriedade entry:', bundle);
+                alert('Formato de bundle inválido - propriedade entry não encontrada');
+                return;
+            }
+
+            console.log('Bundle entries encontradas:', bundle.entry.length);
+
+            // Primeiro, procurar pelo Encounter para obter o ID do paciente
+            let patientId = '';
+
+            bundle.entry.forEach((entry, index) => {
+                if (entry.resource && entry.resource.resourceType === 'Encounter') {
+                    patientData.encounter = entry.resource;
+
+                    // Extrair ID do paciente do subject
+                    if (entry.resource.subject) {
+                        if (entry.resource.subject.reference) {
+                            // Se tiver reference, extrair o ID
+                            patientData.id = entry.resource.subject.reference.split('/')[1];
+                        } else if (entry.resource.subject.identifier && entry.resource.subject.identifier.value) {
+                            // Se tiver identifier, usar o CPF
+                            patientData.id = entry.resource.subject.identifier.value;
+                        }
+                    }
+
+                    console.log('Encounter encontrado, patient ID:', patientData.id);
+                }
+            });
+
+            // Se não encontrou paciente no Encounter, tentar extrair do Composition
+            if (!patientData.id) {
+                const composition = bundle.entry.find(entry =>
+                    entry.resource && entry.resource.resourceType === 'Composition'
+                );
+
+                if (composition && composition.resource.subject) {
+                    if (composition.resource.subject.identifier && composition.resource.subject.identifier.value) {
+                        patientData.id = composition.resource.subject.identifier.value;
+                        console.log('Patient ID extraído do Composition:', patientData.id);
+                    }
+                }
+            }
+
+            // Processar todos os recursos
+            bundle.entry.forEach((entry, index) => {
+                if (!entry.resource) return;
+
+                const resource = entry.resource;
+                console.log(`Processando entry ${index}: ${resource.resourceType}`);
+
+                switch (resource.resourceType) {
+                    case 'Condition':
+                        patientData.conditions.push(resource);
+                        console.log('Condition adicionada:', resource.id);
+                        break;
+
+                    case 'AllergyIntolerance':
+                        patientData.allergies.push(resource);
+                        console.log('AllergyIntolerance adicionada:', resource.id);
+                        break;
+
+                    case 'Procedure':
+                        patientData.procedures.push(resource);
+                        console.log('Procedure adicionado:', resource.id);
+                        break;
+
+                    case 'MedicationRequest':
+                        patientData.medications.push(resource);
+                        console.log('MedicationRequest adicionado:', resource.id);
+                        break;
+                }
+            });
+
+            console.log('Dados do paciente processados:', {
+                id: patientData.id,
+                encounter: !!patientData.encounter.id,
+                conditions: patientData.conditions.length,
+                allergies: patientData.allergies.length,
+                procedures: patientData.procedures.length,
+                medications: patientData.medications.length
+            });
+
+            if (patientData.id) {
+                patients.push(patientData);
+                console.log('Paciente adicionado, total de pacientes:', patients.length);
+                renderPatients();
+            } else {
+                console.error('Nenhum ID de paciente encontrado no bundle');
+                alert('Não foi possível encontrar informações do paciente no arquivo FHIR');
+            }
+        }
+
+        function renderPatients() {
+            document.getElementById('searchArea').style.display = 'none';
+            document.getElementById('patientsContainer').style.display = 'block';
+            document.getElementById('clearBtn').style.display = 'inline-flex';
+
+            renderStats();
+            
+            const container = document.getElementById('patientsList');
+            container.innerHTML = '';
+
+            patients.forEach((patient, index) => {
+                const card = createPatientCard(patient, index);
+                container.appendChild(card);
+            });
+        }
+
+        function renderStats() {
+            const stats = {
+                total: patients.length,
+                conditions: patients.reduce((sum, p) => sum + p.conditions.length, 0),
+                allergies: patients.reduce((sum, p) => sum + p.allergies.length, 0),
+                procedures: patients.reduce((sum, p) => sum + p.procedures.length, 0)
+            };
+
+            document.getElementById('statsCards').innerHTML = `
+                <div class="dashboard-card">
+                    <div class="dashboard-card-label">Total de Atendimentos</div>
+                    <div class="dashboard-card-value">${stats.total}</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-label">Diagnósticos</div>
+                    <div class="dashboard-card-value">${stats.conditions}</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-label">Alergias Registradas</div>
+                    <div class="dashboard-card-value">${stats.allergies}</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-label">Procedimentos</div>
+                    <div class="dashboard-card-value">${stats.procedures}</div>
+                </div>
+            `;
+        }
+
+        function createPatientCard(patient, index) {
+            const card = document.createElement('div');
+            card.className = 'patient-card';
+            card.id = `patient-${index}`;
+
+            const initials = patient.id.substring(0, 2).toUpperCase();
+            const encounterDate = patient.encounter.period?.start ? 
+                new Date(patient.encounter.period.start).toLocaleString('pt-BR') : 'N/A';
+            const encounterType = patient.encounter.class?.display || 'N/A';
+            const status = patient.encounter.status === 'finished' ? 'Finalizado' : 'Em andamento';
+
+            card.innerHTML = `
+                <div class="patient-card-header" onclick="togglePatient(${index})">
+                    <div class="patient-info-row">
+                        <div class="patient-avatar">${initials}</div>
+                        <div class="patient-basic-info">
+                            <h3>Paciente ${patient.id}</h3>
+                            <div class="patient-meta-info">
+                                <div class="meta-item">
+                                    <span class="material-icons" style="font-size: 16px;">calendar_today</span>
+                                    ${encounterDate}
+                                </div>
+                                <div class="meta-item">
+                                    <span class="material-icons" style="font-size: 16px;">local_hospital</span>
+                                    ${encounterType}
+                                </div>
+                                <div class="meta-item">
+                                    <span class="status-badge ${status === 'Finalizado' ? 'status-completed' : 'status-progress'}">
+                                        ${status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="material-icons expand-toggle">expand_more</span>
+                </div>
+                <div class="patient-card-content">
+                    ${renderEncounterInfo(patient)}
+                    ${renderConditions(patient)}
+                    ${renderAllergies(patient)}
+                    ${renderProcedures(patient)}
+                    ${renderMedications(patient)}
+                </div>
+            `;
+
+            return card;
+        }
+
+        function renderEncounterInfo(patient) {
+            return `
+                <div class="info-section">
+                    <div class="section-title">
+                        <span class="material-icons">info</span>
+                        Informações do Atendimento
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">ID do Encontro</span>
+                            <span class="info-value">${patient.encounter.id || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value">${patient.encounter.status || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Modalidade</span>
+                            <span class="info-value">${patient.encounter.class?.display || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Data de Início</span>
+                            <span class="info-value">${patient.encounter.period?.start ? new Date(patient.encounter.period.start).toLocaleString('pt-BR') : 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderConditions(patient) {
+            if (patient.conditions.length === 0) {
+                return `
+                    <div class="info-section">
+                        <div class="section-title">
+                            <span class="material-icons">medical_services</span>
+                            Diagnósticos
+                        </div>
+                        <div class="empty-state">Nenhum diagnóstico registrado</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="info-section">
+                    <div class="section-title">
+                        <span class="material-icons">medical_services</span>
+                        Diagnósticos
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Descrição</th>
+                                <th>Data de Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${patient.conditions.map(condition => `
+                                <tr>
+                                    <td><strong>${condition.code.coding[0].code}</strong></td>
+                                    <td>${condition.code.coding[0].display}</td>
+                                    <td>${condition.recordedDate ? new Date(condition.recordedDate).toLocaleString('pt-BR') : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderAllergies(patient) {
+            if (patient.allergies.length === 0) {
+                return `
+                    <div class="info-section">
+                        <div class="section-title">
+                            <span class="material-icons">warning</span>
+                            Alergias e Intolerâncias
+                        </div>
+                        <div class="empty-state">Nenhuma alergia registrada</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="info-section">
+                    <div class="section-title">
+                        <span class="material-icons">warning</span>
+                        Alergias e Intolerâncias
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Substância</th>
+                                <th>Categoria</th>
+                                <th>Criticidade</th>
+                                <th>Status Clínico</th>
+                                <th>Verificação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${patient.allergies.map(allergy => {
+                                // Função para traduzir clinical status
+                                const getClinicalStatus = (clinicalStatus) => {
+                                    if (!clinicalStatus || !clinicalStatus.coding || !clinicalStatus.coding[0]) return 'N/A';
+                                    const code = clinicalStatus.coding[0].code;
+                                    switch(code) {
+                                        case 'active': return 'Ativo';
+                                        case 'inactive': return 'Inativo';
+                                        case 'resolved': return 'Resolvido';
+                                        default: return code;
+                                    }
+                                };
+
+                                // Função para traduzir verification status
+                                const getVerificationStatus = (verificationStatus) => {
+                                    if (!verificationStatus || !verificationStatus.coding || !verificationStatus.coding[0]) return 'N/A';
+                                    const code = verificationStatus.coding[0].code;
+                                    switch(code) {
+                                        case 'unconfirmed': return 'Não confirmado';
+                                        case 'presumed': return 'Presumido';
+                                        case 'confirmed': return 'Confirmado';
+                                        case 'refuted': return 'Refutado';
+                                        case 'entered-in-error': return 'Erro de entrada';
+                                        default: return code;
+                                    }
+                                };
+
+                                const clinicalStatusText = getClinicalStatus(allergy.clinicalStatus);
+                                const verificationStatusText = getVerificationStatus(allergy.verificationStatus);
+                                const isActive = allergy.clinicalStatus && allergy.clinicalStatus.coding[0].code === 'active';
+
+                                return `
+                                <tr>
+                                    <td><strong>${allergy.code.text}</strong></td>
+                                    <td>${allergy.category[0]}</td>
+                                    <td>
+                                        <span class="alert-badge alert-${allergy.criticality === 'high' ? 'high' : allergy.criticality === 'low' ? 'low' : 'medium'}">
+                                            ${allergy.criticality === 'high' ? 'Alta' : allergy.criticality === 'low' ? 'Baixa' : 'Média'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${isActive ? 'status-active' : 'status-suspended'}">
+                                            ${clinicalStatusText}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${verificationStatusText === 'Confirmado' ? 'status-completed' : 'status-progress'}">
+                                            ${verificationStatusText}
+                                        </span>
+                                    </td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderProcedures(patient) {
+            if (patient.procedures.length === 0) {
+                return `
+                    <div class="info-section">
+                        <div class="section-title">
+                            <span class="material-icons">healing</span>
+                            Procedimentos Realizados
+                        </div>
+                        <div class="empty-state">Nenhum procedimento registrado</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="info-section">
+                    <div class="section-title">
+                        <span class="material-icons">healing</span>
+                        Procedimentos Realizados
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Descrição</th>
+                                <th>Data de Realização</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${patient.procedures.map(procedure => `
+                                <tr>
+                                    <td><strong>${procedure.code.coding[0].code}</strong></td>
+                                    <td>${procedure.code.coding[0].display}</td>
+                                    <td>${procedure.performedDateTime ? new Date(procedure.performedDateTime).toLocaleString('pt-BR') : 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderMedications(patient) {
+            if (patient.medications.length === 0) {
+                return `
+                    <div class="info-section">
+                        <div class="section-title">
+                            <span class="material-icons">medication</span>
+                            Prescrições
+                        </div>
+                        <div class="empty-state">Nenhuma prescrição registrada</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="info-section">
+                    <div class="section-title">
+                        <span class="material-icons">medication</span>
+                        Prescrições
+                    </div>
+                    ${patient.medications.map(med => {
+                        const medications = med.medicationCodeableConcept.text.split(/\d+\)/).filter(m => m.trim());
+                        return `
+                            <div class="medication-box">
+                                <div class="medication-title">Prescrição de ${new Date(med.authoredOn).toLocaleDateString('pt-BR')}</div>
+                                <div class="medication-details">
+                                    ${medications.map((m, i) => `<p><strong>${i + 1})</strong> ${m.trim()}</p>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function togglePatient(index) {
+            const card = document.getElementById(`patient-${index}`);
+            card.classList.toggle('expanded');
+        }
+
+        function clearData() {
+            if (confirm('Tem certeza que deseja limpar todos os dados carregados?')) {
+                patients = [];
+                document.getElementById('searchArea').style.display = 'block';
+                document.getElementById('patientsContainer').style.display = 'none';
+                document.getElementById('clearBtn').style.display = 'none';
+                document.getElementById('cpfInput').value = '';
+                hideError();
+            }
+        }
+
+        function logout() {
+            if (confirm('Tem certeza que deseja sair do sistema?')) {
+                sessionStorage.removeItem('userLoggedIn');
+                localStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SPDATA SGH - Mokups para Nefrologia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para a página de login */
+        .login-container {
+            display: flex;
+            height: 100vh;
+            background-color: var(--color-gray-50);
+            position: relative;
+        }
+        
+        .login-left {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.85) 0%, rgba(0, 85, 204, 0.85)), 
+                        url('login-background.png') center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: var(--color-white);
+            display: none;
+            position: relative;
+        }
+        
+        .login-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-form-container {
+            background: var(--color-white);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 440px;
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-icon {
+            background-color: var(--color-primary);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .logo-icon .material-icons {
+            font-size: 36px;
+            color: var(--color-white);
+        }
+        
+        .login-logo h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin: 0 0 8px 0;
+        }
+        
+        .login-logo p {
+            font-size: 14px;
+            color: var(--color-gray-600);
+            margin: 0;
+        }
+        
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .login-form .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--color-gray-800);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .login-form .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+            box-sizing: border-box;
+            font-family: var(--font-family-inter);
+        }
+        
+        .login-form .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-gray-500);
+        }
+        
+        .input-with-icon .form-input {
+            padding-left: 40px;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin-bottom: 24px;
+        }
+        
+        .btn-login:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-login:disabled {
+            background: var(--color-gray-400);
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: var(--color-error);
+            font-size: 13px;
+            margin-top: 4px;
+            display: none;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .form-input.error {
+            border-color: var(--color-error);
+        }
+
+        .success-message {
+            color: var(--color-success);
+            font-size: 13px;
+            margin-top: 4px;
+            display: none;
+            text-align: center;
+            padding: 10px;
+            background: rgba(40, 205, 89, 0.1);
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        /* Fallback caso a imagem não carregue */
+        .login-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #0055cc 100%);
+            z-index: -1;
+        }
+        
+        /* Responsividade */
+        @media (min-width: 992px) {
+            .login-left {
+                display: flex;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-form-container {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-left">
+            <!-- Background image será carregada via CSS -->
+        </div>
+        
+        <div class="login-right">
+            <div class="login-form-container">
+                <div class="login-logo">
+                    <div class="logo-icon">
+                        <span class="material-icons">local_hospital</span>
+                    </div>
+                    <h1>SPDATA SGH - PatientSummary - iPes - Prototipo</h1>
+                    <p>Entre com suas credenciais para continuar</p>
+                </div>
+
+                <form id="loginForm" class="login-form">
+                    <div id="loginError" class="error-message"></div>
+                    <div id="loginSuccess" class="success-message"></div>
+
+                    <div class="form-group">
+                        <label for="userName" class="form-label">Usuário</label>
+                        <div class="input-with-icon">
+                            <span class="material-icons input-icon">person</span>
+                            <input type="text" id="userName" class="form-input" placeholder="Seu usuário" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Senha</label>
+                        <div class="input-with-icon">
+                            <span class="material-icons input-icon">lock</span>
+                            <input type="password" id="password" class="form-input" placeholder="Sua senha" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar se já está logado
+        if (sessionStorage.getItem('userLoggedIn') === 'true') {
+            window.location.href = 'patient_summary.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userName = document.getElementById('userName').value.trim();
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+            const loginSuccess = document.getElementById('loginSuccess');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Limpar mensagens anteriores
+            loginError.style.display = 'none';
+            loginSuccess.style.display = 'none';
+            
+            // Validação simples
+            if (!userName || !password) {
+                loginError.textContent = 'Por favor, preencha todos os campos.';
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            // Desabilitar botão durante o "login"
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Entrando...';
+            
+            // Simular delay de autenticação
+            setTimeout(() => {
+                // Validação mockada
+                if (userName === 'SPDATA' && password === 'Spdata@260788#') {
+                    loginSuccess.textContent = 'Login realizado com sucesso! Redirecionando...';
+                    loginSuccess.style.display = 'block';
+                    
+                    // Marcar como logado antes de redirecionar
+                    sessionStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('currentUser', 'SPDATA');
+                    
+                    // Simular redirecionamento
+                    setTimeout(() => {
+                        window.location.href = 'patient_summary.html';
+                    }, 1500);
+                } else {
+                    loginError.textContent = 'Usuário ou senha inválidos.';
+                    loginError.style.display = 'block';
+                    
+                    // Restaurar botão
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Entrar';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

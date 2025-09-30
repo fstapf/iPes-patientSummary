@@ -1,0 +1,23 @@
+# Node modules
+proxy-server/node_modules/
+
+# Flutter
+patient_summary_flutter/.dart_tool/
+patient_summary_flutter/.flutter-plugins
+patient_summary_flutter/.flutter-plugins-dependencies
+patient_summary_flutter/.packages
+patient_summary_flutter/build/
+patient_summary_flutter/.pub-cache/
+patient_summary_flutter/.pub/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
