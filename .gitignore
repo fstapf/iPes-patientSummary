@@ -6,7 +6,12 @@ patient_summary_flutter/.dart_tool/
 patient_summary_flutter/.flutter-plugins
 patient_summary_flutter/.flutter-plugins-dependencies
 patient_summary_flutter/.packages
-patient_summary_flutter/build/
+# Keep build/web for deployment, ignore other platforms
+patient_summary_flutter/build/windows/
+patient_summary_flutter/build/linux/
+patient_summary_flutter/build/macos/
+patient_summary_flutter/build/ios/
+patient_summary_flutter/build/android/
 patient_summary_flutter/.pub-cache/
 patient_summary_flutter/.pub/
 
