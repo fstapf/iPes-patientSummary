@@ -9,15 +9,3 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-
-  # Flutter Web App
-  - type: web
-    name: ipes-patient-summary-web
-    runtime: static
-    rootDir: patient_summary_flutter
-    buildCommand: flutter build web --release
-    staticPublishPath: build/web
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
