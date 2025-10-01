@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir)",
+      "Bash(start patient_summary.html)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(curl:*)",
+      "Bash(npm install)",
+      "Bash(flutter:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(npm start)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,768 @@
+{
+  "resourceType" : "Bundle",
+  "identifier" : {
+    "system" : "urn:oid:1.3.6.1.4.1.54413.1.1.5.1.2802112",
+    "value" : "29"
+  },
+  "type" : "document",
+  "timestamp" : "2025-09-29T11:46:57.727-03:00",
+  "entry" : [ {
+    "fullUrl" : "Composition/29",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "29",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRSumarioAlta" ]
+      },
+      "identifier" : {
+        "system" : "urn:oid:1.3.6.1.4.1.54413.1.1.5.1.2802112",
+        "value" : "29"
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRTipoDocumento",
+          "code" : "SA"
+        } ]
+      },
+      "category" : [ {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRModalidadeAssistencial",
+          "code" : "04",
+          "display" : "Atenção Hospitalar"
+        } ]
+      } ],
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "date" : "2025-09-26T13:50:00-03:00",
+      "title" : "Sumário de Alta",
+      "section" : [ {
+        "title" : "Caracterização do atendimento e Informações da alta",
+        "entry" : [ {
+          "reference" : "Encounter/29"
+        } ]
+      }, {
+        "title" : "Motivo da admissão, diagnósticos relevantes e patologias associadas",
+        "entry" : [ {
+          "reference" : "Condition/425"
+        }, {
+          "reference" : "Condition/3699"
+        } ]
+      }, {
+        "title" : "Procedimento(s) realizado(s) ou solicitado(s)",
+        "entry" : [ {
+          "reference" : "Procedure/92"
+        }, {
+          "reference" : "Procedure/93"
+        }, {
+          "reference" : "Procedure/94"
+        }, {
+          "reference" : "Procedure/95"
+        }, {
+          "reference" : "Procedure/96"
+        }, {
+          "reference" : "Procedure/97"
+        }, {
+          "reference" : "Procedure/98"
+        } ]
+      }, {
+        "title" : "Resumo da Evolução Clínica",
+        "entry" : [ {
+          "reference" : "ClinicalImpression/29"
+        } ]
+      }, {
+        "title" : "Alergias e/ou reações adversas na internação",
+        "entry" : [ {
+          "reference" : "AllergyIntolerance/47"
+        }, {
+          "reference" : "AllergyIntolerance/48"
+        } ]
+      }, {
+        "title" : "Prescrição da Alta",
+        "entry" : [ {
+          "reference" : "MedicationRequest/43"
+        } ]
+      }, {
+        "title" : "Plano de cuidados, instruções e recomendações (na alta)",
+        "entry" : [ {
+          "reference" : "CarePlan/29"
+        } ]
+      } ]
+    }
+  }, {
+    "fullUrl" : "Encounter/29",
+    "resource" : {
+      "resourceType" : "Encounter",
+      "id" : "29",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRContatoAssistencial-1.0" ]
+      },
+      "status" : "finished",
+      "class" : {
+        "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRModalidadeAssistencial",
+        "code" : "04",
+        "display" : "Atenção Hospitalar"
+      },
+      "priority" : {
+        "coding" : [ {
+          "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRCaraterAtendimento",
+          "code" : "02"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "participant" : [ {
+        "type" : [ {
+          "coding" : [ {
+            "system" : "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+            "code" : "ATND"
+          }, {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        } ],
+        "individual" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        }
+      } ],
+      "period" : {
+        "start" : "2025-09-26T08:48:00-03:00"
+      },
+      "diagnosis" : [ {
+        "condition" : {
+          "reference" : "Condition/425"
+        }
+      }, {
+        "condition" : {
+          "reference" : "Condition/3699"
+        }
+      } ],
+      "hospitalization" : {
+        "admitSource" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRProcedencia"
+          } ]
+        },
+        "dischargeDisposition" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRMotivoDesfecho",
+            "code" : "01",
+            "display" : "Alta clínica"
+          } ]
+        }
+      },
+      "serviceProvider" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cnes",
+          "value" : "2802112"
+        }
+      }
+    }
+  }, {
+    "fullUrl" : "Condition/425",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "425",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProblemaDiagnostico" ]
+      },
+      "clinicalStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          "code" : "resolved"
+        } ]
+      },
+      "category" : [ {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code" : "encounter-diagnosis"
+        } ]
+      } ],
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCID10",
+          "code" : "A90",
+          "display" : "DENGUE [DENGUE CLASSICO]"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "recordedDate" : "2013-12-27T15:03:39-02:00"
+    }
+  }, {
+    "fullUrl" : "Condition/3699",
+    "resource" : {
+      "resourceType" : "Condition",
+      "id" : "3699",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProblemaDiagnostico" ]
+      },
+      "clinicalStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          "code" : "active"
+        } ]
+      },
+      "category" : [ {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code" : "problem-list-item"
+        } ]
+      } ],
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCID10",
+          "code" : "I10",
+          "display" : "HIPERTENSAO ESSENCIAL (PRIMARIA)"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "recordedDate" : "2013-12-27T15:03:39-02:00"
+    }
+  }, {
+    "fullUrl" : "Procedure/92",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "92",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "6117",
+          "display" : "DIAGNOSTICO E/OU ATENDIMENTO DE URGENCIA EM CLINICA MEDICA"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/93",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "93",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "130",
+          "display" : "DOSAGEM DE GLICOSE"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/94",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "94",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "137",
+          "display" : "DOSAGEM DE SODIO"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/95",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "95",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "139",
+          "display" : "DOSAGEM DE TRANSAMINASE GLUTAMICO-PIRUVICA (TGP)"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/96",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "96",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "248",
+          "display" : "HEMOGRAMA COMPLETO"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/97",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "97",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "0",
+          "display" : "NAO INFORMADO"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "Procedure/98",
+    "resource" : {
+      "resourceType" : "Procedure",
+      "id" : "98",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRProcedimentoRealizado-1.0" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://www.saude.gov.br/fhir/r4/CodeSystem/BRTipoIdentificador",
+            "code" : "AUTH"
+          } ]
+        }
+      } ],
+      "status" : "completed",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBHPMTUSS",
+          "code" : "757",
+          "display" : "RADIOGRAFIA DE COSTELAS (POR HEMITORAX)"
+        } ]
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "performedDateTime" : "2025-09-26T08:48:00-03:00",
+      "performer" : [ {
+        "function" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRCBO",
+            "code" : "225120"
+          } ]
+        },
+        "actor" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cpf",
+            "value" : "12172488895"
+          }
+        },
+        "onBehalfOf" : {
+          "identifier" : {
+            "system" : "https://saude.gov.br/fhir/sid/cnes",
+            "value" : "2802112"
+          }
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "ClinicalImpression/29",
+    "resource" : {
+      "resourceType" : "ClinicalImpression",
+      "id" : "29",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRResumoEvolucaoClinica" ]
+      },
+      "status" : "completed",
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "summary" : "soroterapia, avaliação de exames, plaquetas estáveis"
+    }
+  }, {
+    "fullUrl" : "AllergyIntolerance/47",
+    "resource" : {
+      "resourceType" : "AllergyIntolerance",
+      "id" : "47",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRAlergiaReacaoAdversa-1.0" ]
+      },
+      "clinicalStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+          "code" : "active  ",
+          "display" : "Active  "
+        } ]
+      },
+      "verificationStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+          "code" : "confirmed",
+          "display" : "Confirmed"
+        } ]
+      },
+      "category" : [ "medication" ],
+      "criticality" : "high",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/ValueSet/BRTerminologiaMedicamento",
+          "code" : "9876"
+        } ],
+        "text" : "ÁCIDO ACETILSALICILSALICÍLICO"
+      },
+      "patient" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "onsetDateTime" : "2025-09-26T13:50:00-03:00"
+    }
+  }, {
+    "fullUrl" : "AllergyIntolerance/48",
+    "resource" : {
+      "resourceType" : "AllergyIntolerance",
+      "id" : "48",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRAlergiaReacaoAdversa-1.0" ]
+      },
+      "clinicalStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+          "code" : "active  ",
+          "display" : "Active  "
+        } ]
+      },
+      "verificationStatus" : {
+        "coding" : [ {
+          "system" : "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+          "code" : "confirmed",
+          "display" : "Confirmed"
+        } ]
+      },
+      "category" : [ "food" ],
+      "criticality" : "low",
+      "code" : {
+        "coding" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRAlergenosCBARA",
+          "code" : "amendoim"
+        } ],
+        "text" : "Amendoim"
+      },
+      "patient" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "onsetDateTime" : "2025-09-26T13:50:00-03:00"
+    }
+  }, {
+    "fullUrl" : "MedicationRequest/43",
+    "resource" : {
+      "resourceType" : "MedicationRequest",
+      "id" : "43",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRPrescricaoMedicamento" ]
+      },
+      "contained" : [ {
+        "resourceType" : "Practitioner",
+        "id" : "56",
+        "identifier" : [ {
+          "system" : "https://terminologia.saude.gov.br/fhir/NamingSystem/crm-pr",
+          "value" : "14362"
+        }, {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "12172488895"
+        } ],
+        "name" : [ {
+          "text" : "MEDICO ANONIMIZADO"
+        } ]
+      } ],
+      "status" : "unknown",
+      "intent" : "order",
+      "medicationCodeableConcept" : {
+        "text" : "01) Dipirona Sódica 500 MG  - 1 COMP 12/12Em caso de febre02) Omeprazol 20 MG - 1 COMP Em jejum"
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      },
+      "authoredOn" : "2025-09-26T09:10:00-03:00",
+      "requester" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cnes",
+          "value" : "2802112"
+        }
+      },
+      "dosageInstruction" : [ {
+        "route" : {
+          "coding" : [ {
+            "system" : "https://terminologia.saude.gov.br/fhir/CodeSystem/BRViaAdministracao"
+          } ]
+        }
+      } ]
+    }
+  }, {
+    "fullUrl" : "CarePlan/29",
+    "resource" : {
+      "resourceType" : "CarePlan",
+      "id" : "29",
+      "meta" : {
+        "profile" : [ "http://www.saude.gov.br/fhir/r4/StructureDefinition/BRPlanoCuidados-1.0" ]
+      },
+      "status" : "active",
+      "intent" : "plan",
+      "description" : "acompanhamentoliquidosrepetir hemograma em 7 dias",
+      "subject" : {
+        "identifier" : {
+          "system" : "https://saude.gov.br/fhir/sid/cpf",
+          "value" : "36275558806"
+        }
+      }
+    }
+  } ]
+}

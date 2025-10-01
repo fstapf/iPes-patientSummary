@@ -1,0 +1,11 @@
+services:
+  # Proxy Server
+  - type: web
+    name: ipes-proxy-server
+    runtime: node
+    rootDir: proxy-server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production

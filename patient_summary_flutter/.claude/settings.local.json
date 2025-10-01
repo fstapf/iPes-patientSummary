@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for file in patient_summary_flutter/*)",
+      "Bash(do git mv \"$file\" .)",
+      "Bash(done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
