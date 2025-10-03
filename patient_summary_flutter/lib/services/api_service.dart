@@ -136,7 +136,7 @@ class ApiService {
             headers: {
               'Authorization': 'Bearer $_accessToken',
               'Accept': 'application/fhir+json',
-              'subject-id': cpf,  // Header necessário para autorização!
+              'subject-id': '12172488895',  // Header fixo para autorização
             },
           ),
         );
@@ -168,7 +168,7 @@ class ApiService {
               headers: {
                 'Authorization': 'Bearer $_accessToken',
                 'Accept': 'application/fhir+json',
-                'subject-id': cpf,  // Header necessário para autorização!
+                'subject-id': '12172488895',  // Header fixo para autorização
               },
             ),
           );
