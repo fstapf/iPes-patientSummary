@@ -57,6 +57,15 @@ dependencies:
   # Window manager for desktop
   window_manager: ^0.5.1
 
+  # PDF viewer
+  syncfusion_flutter_pdfviewer: ^28.1.33
+
+  # Path provider para arquivos temporários
+  path_provider: ^2.1.1
+
+  # URL launcher para abrir PDFs
+  url_launcher: ^6.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

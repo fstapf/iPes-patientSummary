@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(flutter build:*)",
+      "Bash($env:MSYS_NO_PATHCONV=1)",
+      "Bash(export MSYS_NO_PATHCONV=1)",
+      "Read(//d/projetosVS/iPes-patientSummary/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../models/patient_data.dart';
+import 'diagnostic_reports_card.dart';
 
 /// Card expandível do paciente baseado no design original
 class PatientCard extends StatefulWidget {
   final PatientData patient;
   final int index;
+  final List<DiagnosticReportData>? diagnosticReports;
+  final String cpf;
 
   const PatientCard({
     super.key,
     required this.patient,
     required this.index,
+    this.diagnosticReports,
+    required this.cpf,
   });
 
   @override
@@ -252,6 +257,10 @@ class _PatientCardState extends State<PatientCard>
                         _buildProcedures(),
                         const SizedBox(height: 32),
                         _buildMedications(),
+                        if (widget.diagnosticReports != null) ...[
+                          const SizedBox(height: 32),
+                          _buildDiagnosticReports(),
+                        ],
                         if (widget.patient.clinicalImpression != null) ...[
                           const SizedBox(height: 32),
                           _buildClinicalImpression(),
@@ -709,6 +718,15 @@ class _PatientCardState extends State<PatientCard>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDiagnosticReports() {
+    final reports = widget.diagnosticReports ?? [];
+
+    return DiagnosticReportsCard(
+      reports: reports,
+      cpf: widget.cpf,
     );
   }
 

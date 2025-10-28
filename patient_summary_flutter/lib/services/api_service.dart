@@ -11,7 +11,8 @@ class ApiService {
   // static const String baseUrl = 'https://dev.ipes.tech:9444';
 
   // Para usar com proxy hospedado (produção):
-  static const String baseUrl = 'https://ipes-proxy-server.onrender.com';
+  //static const String baseUrl = 'https://ipes-proxy-server.onrender.com';
+  static const String baseUrl = 'http://localhost:3000';
 
   static const String clientId = 'SQybqHk8DOEpbXoT_Jf4e9HVpj8a';
   static const String clientSecret = 'QXwmNti9h6jLu8rTuLyUKuzhbVEa';
@@ -128,6 +129,7 @@ class ApiService {
 
       print('🔍 Buscando paciente CPF: $cpf');
       print('🌐 Path: $path');
+      print('👤 subject-id: $cpf (próprio paciente)');
 
       try {
         final response = await _dio.get(
@@ -136,7 +138,7 @@ class ApiService {
             headers: {
               'Authorization': 'Bearer $_accessToken',
               'Accept': 'application/fhir+json',
-              'subject-id': '12172488895',  // Header fixo para autorização
+              'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
             },
           ),
         );
@@ -168,7 +170,7 @@ class ApiService {
               headers: {
                 'Authorization': 'Bearer $_accessToken',
                 'Accept': 'application/fhir+json',
-                'subject-id': '12172488895',  // Header fixo para autorização
+                'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
               },
             ),
           );
@@ -309,5 +311,207 @@ class ApiService {
     print('   - Medications: ${(patientData['medications'] as List).length}');
 
     return PatientData.fromJson(patientData);
+  }
+
+  /// Busca exames diagnósticos do paciente pelo CPF
+  Future<List<DiagnosticReportData>> searchDiagnosticReportsByCpf(String cpf) async {
+    try {
+      // Validar CPF
+      if (cpf.isEmpty) {
+        throw Exception('Por favor, digite um CPF');
+      }
+
+      if (cpf.length != 11) {
+        throw Exception('CPF deve ter exatamente 11 dígitos');
+      }
+
+      if (!RegExp(r'^\d{11}$').hasMatch(cpf)) {
+        throw Exception('CPF deve conter apenas números');
+      }
+
+      // Obter token se não tiver ou se expirou
+      if (_accessToken == null) {
+        await getAccessToken();
+      }
+
+      final path = '/ehrrunner/fhir/1.0.1/DiagnosticReport?patient=Patient/2.16.840.1.113883.13.237-$cpf&_sort=-issued&_include=DiagnosticReport:based-on&status=final';
+
+      print('🔍 Buscando exames para CPF: $cpf');
+      print('🌐 Path: $path');
+      print('👤 subject-id: $cpf (próprio paciente)');
+
+      try {
+        final response = await _dio.get(
+          path,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $_accessToken',
+              'Accept': 'application/fhir+json',
+              'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+            },
+          ),
+        );
+
+        print('📡 Status da busca de exames: ${response.statusCode}');
+        print('✅ Exames recebidos com sucesso');
+
+        return _processDiagnosticReportsBundle(response.data as Map<String, dynamic>);
+      } on DioException catch (e) {
+        print('❌ Erro na busca de exames: ${e.message}');
+
+        // Se token expirado (401), tentar renovar
+        if (e.response?.statusCode == 401) {
+          print('🔄 Token expirado, renovando...');
+          await getAccessToken();
+
+          final retryResponse = await _dio.get(
+            path,
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $_accessToken',
+                'Accept': 'application/fhir+json',
+                'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+              },
+            ),
+          );
+
+          print('📡 Status após renovação: ${retryResponse.statusCode}');
+          print('✅ Exames recebidos com sucesso');
+
+          return _processDiagnosticReportsBundle(retryResponse.data as Map<String, dynamic>);
+        }
+
+        if (e.response?.statusCode == 404) {
+          // Nenhum exame encontrado - retornar lista vazia ao invés de erro
+          print('ℹ️ Nenhum exame encontrado para este paciente');
+          return [];
+        }
+
+        print('📡 Status: ${e.response?.statusCode}');
+        print('❌ Corpo da resposta: ${e.response?.data}');
+        throw Exception('Erro ao buscar exames: ${e.message}');
+      }
+    } catch (error) {
+      rethrow;
+    }
+  }
+
+  /// Processa o bundle de DiagnosticReports
+  List<DiagnosticReportData> _processDiagnosticReportsBundle(Map<String, dynamic> bundle) {
+    print('🔄 Processando bundle de exames...');
+
+    final diagnosticReports = <DiagnosticReportData>[];
+
+    if (bundle['entry'] == null) {
+      print('ℹ️ Bundle sem entries - nenhum exame encontrado');
+      return diagnosticReports;
+    }
+
+    final entries = bundle['entry'] as List<dynamic>;
+    print('📋 Total de entries: ${entries.length}');
+
+    for (var entry in entries) {
+      final resource = entry['resource'] as Map<String, dynamic>?;
+      if (resource == null) continue;
+
+      // Apenas processar DiagnosticReport (ignorar ServiceRequest incluídos)
+      if (resource['resourceType'] == 'DiagnosticReport') {
+        try {
+          diagnosticReports.add(DiagnosticReportData.fromJson(resource));
+        } catch (e) {
+          print('⚠️ Erro ao processar DiagnosticReport: $e');
+        }
+      }
+    }
+
+    print('📊 Total de exames processados: ${diagnosticReports.length}');
+    return diagnosticReports;
+  }
+
+  /// Busca o PDF de um exame diagnóstico
+  Future<List<int>> fetchPdfBytes(String binaryId, String cpf) async {
+    try {
+      // Obter token se não tiver ou se expirou
+      if (_accessToken == null) {
+        await getAccessToken();
+      }
+
+      final path = '/ehrrunner/fhir/1.0.1/Binary/$binaryId';
+
+      print('📄 Buscando PDF: $binaryId');
+      print('🌐 Path: $path');
+
+      try {
+        final response = await _dio.get(
+          path,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $_accessToken',
+              'Accept': 'application/fhir+json',  // Header necessário para obter o JSON com base64
+              'subject-id': cpf,
+            },
+          ),
+        );
+
+        print('📡 Status da busca de PDF: ${response.statusCode}');
+
+        final data = response.data as Map<String, dynamic>;
+
+        // Validar resposta
+        if (data['resourceType'] != 'Binary') {
+          throw Exception('Resposta inválida - esperado resourceType Binary');
+        }
+
+        if (data['contentType'] != 'application/pdf') {
+          throw Exception('Tipo de conteúdo inválido - esperado application/pdf');
+        }
+
+        final base64Data = data['data'] as String?;
+        if (base64Data == null) {
+          throw Exception('PDF não contém dados');
+        }
+
+        print('✅ PDF recebido - decodificando base64...');
+
+        // Decodificar base64 para bytes
+        final pdfBytes = base64Decode(base64Data);
+        print('✅ PDF decodificado - ${pdfBytes.length} bytes');
+
+        return pdfBytes;
+
+      } on DioException catch (e) {
+        print('❌ Erro ao buscar PDF: ${e.message}');
+
+        // Se token expirado (401), tentar renovar
+        if (e.response?.statusCode == 401) {
+          print('🔄 Token expirado, renovando...');
+          await getAccessToken();
+
+          final retryResponse = await _dio.get(
+            path,
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $_accessToken',
+                'Accept': 'application/fhir+json',
+                'subject-id': cpf,
+              },
+            ),
+          );
+
+          print('📡 Status após renovação: ${retryResponse.statusCode}');
+
+          final data = retryResponse.data as Map<String, dynamic>;
+          final base64Data = data['data'] as String;
+          return base64Decode(base64Data);
+        }
+
+        print('📡 Status: ${e.response?.statusCode}');
+        print('❌ Corpo da resposta: ${e.response?.data}');
+        throw Exception('Erro ao buscar PDF: ${e.message}');
+      }
+    } catch (error) {
+      print('❌ Erro ao processar PDF: $error');
+      rethrow;
+    }
   }
 }

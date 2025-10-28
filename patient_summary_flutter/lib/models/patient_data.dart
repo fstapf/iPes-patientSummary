@@ -221,3 +221,59 @@ class CarePlanData {
     );
   }
 }
+
+class DiagnosticReportData {
+  final String? id;
+  final String? status;
+  final String? category;
+  final String code;
+  final String? issued;
+  final String? pdfUrl;
+  final String? performerName;
+
+  DiagnosticReportData({
+    this.id,
+    this.status,
+    this.category,
+    required this.code,
+    this.issued,
+    this.pdfUrl,
+    this.performerName,
+  });
+
+  factory DiagnosticReportData.fromJson(Map<String, dynamic> json) {
+    String? categoryDisplay;
+    if (json['category'] != null && (json['category'] as List).isNotEmpty) {
+      final categoryList = json['category'] as List;
+      if (categoryList[0]['coding'] != null && (categoryList[0]['coding'] as List).isNotEmpty) {
+        categoryDisplay = categoryList[0]['coding'][0]['display'] as String?;
+      }
+    }
+
+    String? pdfUrl;
+    if (json['presentedForm'] != null && (json['presentedForm'] as List).isNotEmpty) {
+      pdfUrl = json['presentedForm'][0]['url'] as String?;
+    }
+
+    String? performerName;
+    if (json['contained'] != null && (json['contained'] as List).isNotEmpty) {
+      final practitioner = (json['contained'] as List).firstWhere(
+        (item) => item['resourceType'] == 'Practitioner',
+        orElse: () => null,
+      );
+      if (practitioner != null && practitioner['name'] != null && (practitioner['name'] as List).isNotEmpty) {
+        performerName = practitioner['name'][0]['text'] as String?;
+      }
+    }
+
+    return DiagnosticReportData(
+      id: json['id'] as String?,
+      status: json['status'] as String?,
+      category: categoryDisplay,
+      code: json['code']['text'] as String,
+      issued: json['issued'] as String?,
+      pdfUrl: pdfUrl,
+      performerName: performerName,
+    );
+  }
+}

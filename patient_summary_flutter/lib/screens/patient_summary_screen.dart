@@ -5,6 +5,7 @@ import '../models/patient_data.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/patient_card.dart';
+import '../widgets/diagnostic_reports_card.dart';
 import 'login_screen.dart';
 
 /// Tela principal de visualização de pacientes baseada no design original
@@ -21,6 +22,8 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
   final _authService = AuthService();
 
   final List<PatientData> _patients = [];
+  final List<String> _patientCpfs = [];
+  final Map<String, List<DiagnosticReportData>> _patientReports = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _showSearchArea = true;
@@ -40,10 +43,19 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
     });
 
     try {
-      final patientData = await _apiService.searchPatientByCpf(cpf);
+      // Buscar dados do paciente e exames em paralelo
+      final results = await Future.wait([
+        _apiService.searchPatientByCpf(cpf),
+        _apiService.searchDiagnosticReportsByCpf(cpf),
+      ]);
+
+      final patientData = results[0] as PatientData;
+      final diagnosticReports = results[1] as List<DiagnosticReportData>;
 
       setState(() {
         _patients.add(patientData);
+        _patientCpfs.add(cpf);
+        _patientReports[cpf] = diagnosticReports;
         _isLoading = false;
         _showSearchArea = false;
       });
@@ -71,6 +83,8 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
             onPressed: () {
               setState(() {
                 _patients.clear();
+                _patientCpfs.clear();
+                _patientReports.clear();
                 _showSearchArea = true;
                 _cpfController.clear();
                 _errorMessage = null;
@@ -371,9 +385,12 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
           child: ListView.builder(
             itemCount: _patients.length,
             itemBuilder: (context, index) {
+              final cpf = _patientCpfs[index];
               return PatientCard(
                 patient: _patients[index],
                 index: index,
+                diagnosticReports: _patientReports[cpf],
+                cpf: cpf,
               );
             },
           ),

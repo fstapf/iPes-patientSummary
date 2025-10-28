@@ -69,7 +69,8 @@ app.post(['/token', '/oauth2/token'], async (req, res) => {
 app.get('/ehrrunner/fhir/*', async (req, res) => {
   try {
     const path = req.path;
-    const url = `${FHIR_BASE_URL}${path}`;
+    const queryString = req.url.split('?')[1] || '';
+    const url = `${FHIR_BASE_URL}${path}${queryString ? '?' + queryString : ''}`;
 
     console.log(`Proxying to: ${url}`);
     console.log(`Headers received:`, req.headers);
@@ -84,7 +85,14 @@ app.get('/ehrrunner/fhir/*', async (req, res) => {
       },
     });
 
+    console.log(`📡 Response status: ${response.status}`);
+
     const data = await response.json();
+
+    if (response.status !== 200) {
+      console.error(`❌ Error response:`, data);
+    }
+
     res.status(response.status).json(data);
   } catch (error) {
     console.error('Error in FHIR request:', error);
