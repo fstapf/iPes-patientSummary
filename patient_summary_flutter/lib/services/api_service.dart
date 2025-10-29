@@ -11,8 +11,8 @@ class ApiService {
   // static const String baseUrl = 'https://dev.ipes.tech:9444';
 
   // Para usar com proxy hospedado (produção):
-  //static const String baseUrl = 'https://ipes-proxy-server.onrender.com';
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://ipes-proxy-server.onrender.com';
+  //static const String baseUrl = 'http://localhost:3000';
 
   static const String clientId = 'SQybqHk8DOEpbXoT_Jf4e9HVpj8a';
   static const String clientSecret = 'QXwmNti9h6jLu8rTuLyUKuzhbVEa';
