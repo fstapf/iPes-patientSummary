@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants/app_colors.dart';
 import '../models/patient_data.dart';
-import 'diagnostic_reports_card.dart';
 
 /// Card expandível do paciente baseado no design original
 class PatientCard extends StatefulWidget {
   final PatientData patient;
   final int index;
-  final List<DiagnosticReportData>? diagnosticReports;
   final String cpf;
 
   const PatientCard({
     super.key,
     required this.patient,
     required this.index,
-    this.diagnosticReports,
     required this.cpf,
   });
 
@@ -81,14 +78,46 @@ class _PatientCardState extends State<PatientCard>
     }
   }
 
+  String _getEncounterTitle() {
+    final eventType = widget.patient.encounter.eventSummaryType;
+    final classCode = widget.patient.encounter.classCode;
+
+    if (eventType == 'RAC') {
+      return 'Registro Atendimento Clínico';
+    } else if (eventType == 'SA') {
+      return 'Sumário de Alta';
+    } else if (classCode == 'AMB') {
+      return 'Atendimento Ambulatorial';
+    } else if (classCode == '04') {
+      return 'Atenção Hospitalar';
+    }
+
+    return widget.patient.encounter.classDisplay ?? 'Atendimento';
+  }
+
+  String _getModalityText() {
+    final eventType = widget.patient.encounter.eventSummaryType;
+    final classCode = widget.patient.encounter.classCode;
+
+    if (eventType == 'RAC' && classCode == 'AMB') {
+      return 'Ambulatorial';
+    } else if (eventType == 'SA' && classCode == '04') {
+      return 'Atenção Hospitalar';
+    }
+
+    return widget.patient.encounter.classDisplay ?? 'N/A';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final initials = widget.patient.id.substring(0, 2).toUpperCase();
+    final encounterTitle = _getEncounterTitle();
     final encounterDate = _formatDate(widget.patient.encounter.periodStart);
-    final encounterType = widget.patient.encounter.classDisplay ?? 'N/A';
     final status = widget.patient.encounter.status == 'finished'
         ? 'Finalizado'
         : 'Em andamento';
+
+    // Criar iniciais a partir do índice do atendimento
+    final initials = '${widget.index + 1}.';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -161,7 +190,7 @@ class _PatientCardState extends State<PatientCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          encounterType,
+                          encounterTitle,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -257,10 +286,6 @@ class _PatientCardState extends State<PatientCard>
                         _buildProcedures(),
                         const SizedBox(height: 32),
                         _buildMedications(),
-                        if (widget.diagnosticReports != null) ...[
-                          const SizedBox(height: 32),
-                          _buildDiagnosticReports(),
-                        ],
                         if (widget.patient.clinicalImpression != null) ...[
                           const SizedBox(height: 32),
                           _buildClinicalImpression(),
@@ -307,11 +332,56 @@ class _PatientCardState extends State<PatientCard>
   }
 
   Widget _buildEncounterInfo() {
+    final modality = _getModalityText();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Informações do Atendimento', Icons.info),
         const SizedBox(height: 16),
+
+        // Peso e Altura no topo (se disponíveis)
+        if (widget.patient.encounter.weight != null || widget.patient.encounter.height != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE3F2FD),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                if (widget.patient.encounter.weight != null) ...[
+                  const Icon(Icons.monitor_weight, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Peso: ${widget.patient.encounter.weight!.toStringAsFixed(1)} kg',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.gray900,
+                    ),
+                  ),
+                ],
+                if (widget.patient.encounter.weight != null && widget.patient.encounter.height != null)
+                  const SizedBox(width: 24),
+                if (widget.patient.encounter.height != null) ...[
+                  const Icon(Icons.height, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Altura: ${widget.patient.encounter.height!.toStringAsFixed(2)} cm',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.gray900,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -326,8 +396,7 @@ class _PatientCardState extends State<PatientCard>
               _buildInfoRow(
                   'Status', widget.patient.encounter.status ?? 'N/A'),
               const SizedBox(height: 12),
-              _buildInfoRow('Modalidade',
-                  widget.patient.encounter.classDisplay ?? 'N/A'),
+              _buildInfoRow('Modalidade', modality),
               const SizedBox(height: 12),
               _buildInfoRow('Data de Início',
                   _formatDate(widget.patient.encounter.periodStart)),
@@ -434,12 +503,23 @@ class _PatientCardState extends State<PatientCard>
   }
 
   Widget _buildAllergies() {
+    // Filtrar alergias duplicadas pelo texto (code.text)
+    final seenAllergies = <String>{};
+    final uniqueAllergies = widget.patient.allergies.where((allergy) {
+      final allergyText = allergy.text.trim().toUpperCase();
+      if (seenAllergies.contains(allergyText)) {
+        return false; // Já existe, não incluir
+      }
+      seenAllergies.add(allergyText);
+      return true; // Primeira ocorrência, incluir
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Alergias e Intolerâncias', Icons.warning),
         const SizedBox(height: 16),
-        if (widget.patient.allergies.isEmpty)
+        if (uniqueAllergies.isEmpty)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(32),
@@ -453,7 +533,7 @@ class _PatientCardState extends State<PatientCard>
             ),
           )
         else
-          ...widget.patient.allergies.map((allergy) {
+          ...uniqueAllergies.map((allergy) {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
@@ -718,15 +798,6 @@ class _PatientCardState extends State<PatientCard>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDiagnosticReports() {
-    final reports = widget.diagnosticReports ?? [];
-
-    return DiagnosticReportsCard(
-      reports: reports,
-      cpf: widget.cpf,
     );
   }
 

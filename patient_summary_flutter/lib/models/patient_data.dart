@@ -50,17 +50,25 @@ class EncounterData {
   final String? id;
   final String? status;
   final String? classDisplay;
+  final String? classCode;
   final String? periodStart;
   final String? periodEnd;
   final String? dischargeDisposition;
+  final String? eventSummaryType;
+  final double? weight;
+  final double? height;
 
   EncounterData({
     this.id,
     this.status,
     this.classDisplay,
+    this.classCode,
     this.periodStart,
     this.periodEnd,
     this.dischargeDisposition,
+    this.eventSummaryType,
+    this.weight,
+    this.height,
   });
 
   factory EncounterData.fromJson(Map<String, dynamic> json) {
@@ -74,13 +82,41 @@ class EncounterData {
       return fullId;
     }
 
+    // Extrair EventSummaryType das tags
+    String? eventSummaryType;
+    if (json['meta'] != null && json['meta']['tag'] != null) {
+      final tags = json['meta']['tag'] as List<dynamic>;
+      for (var tag in tags) {
+        if (tag['system'] != null &&
+            (tag['system'].toString().contains('EventSummaryType') ||
+             tag['system'].toString().contains('CodingSystem/EventSummaryType'))) {
+          eventSummaryType = tag['code'] as String?;
+          break;
+        }
+      }
+    }
+
+    // Extrair peso e altura se disponíveis
+    double? weight;
+    double? height;
+    if (json['weight'] != null) {
+      weight = (json['weight'] is int) ? (json['weight'] as int).toDouble() : json['weight'] as double?;
+    }
+    if (json['height'] != null) {
+      height = (json['height'] is int) ? (json['height'] as int).toDouble() : json['height'] as double?;
+    }
+
     return EncounterData(
       id: extractEncounterId(json['id'] as String?),
       status: json['status'] as String?,
       classDisplay: json['class']?['display'] as String?,
+      classCode: json['class']?['code'] as String?,
       periodStart: json['period']?['start'] as String?,
       periodEnd: json['period']?['end'] as String?,
       dischargeDisposition: json['hospitalization']?['dischargeDisposition']?['coding']?[0]?['display'] as String?,
+      eventSummaryType: eventSummaryType,
+      weight: weight,
+      height: height,
     );
   }
 }
@@ -266,11 +302,21 @@ class DiagnosticReportData {
       }
     }
 
+    // Extrair código - proteger contra null
+    String code = 'Sem descrição';
+    if (json['code'] != null && json['code']['text'] != null) {
+      code = json['code']['text'] as String;
+    } else if (json['code'] != null && json['code']['coding'] != null && (json['code']['coding'] as List).isNotEmpty) {
+      // Tentar pegar do coding se text não estiver disponível
+      final coding = (json['code']['coding'] as List)[0];
+      code = (coding['display'] ?? coding['code'] ?? 'Sem descrição') as String;
+    }
+
     return DiagnosticReportData(
       id: json['id'] as String?,
       status: json['status'] as String?,
       category: categoryDisplay,
-      code: json['code']['text'] as String,
+      code: code,
       issued: json['issued'] as String?,
       pdfUrl: pdfUrl,
       performerName: performerName,

@@ -49,12 +49,15 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
         _apiService.searchDiagnosticReportsByCpf(cpf),
       ]);
 
-      final patientData = results[0] as PatientData;
+      final patientDataList = results[0] as List<PatientData>;
       final diagnosticReports = results[1] as List<DiagnosticReportData>;
 
       setState(() {
-        _patients.add(patientData);
-        _patientCpfs.add(cpf);
+        // Adicionar cada atendimento como um item separado
+        for (var patientData in patientDataList) {
+          _patients.add(patientData);
+          _patientCpfs.add(cpf);
+        }
         _patientReports[cpf] = diagnosticReports;
         _isLoading = false;
         _showSearchArea = false;
@@ -386,11 +389,30 @@ class _PatientSummaryScreenState extends State<PatientSummaryScreen> {
             itemCount: _patients.length,
             itemBuilder: (context, index) {
               final cpf = _patientCpfs[index];
-              return PatientCard(
-                patient: _patients[index],
-                index: index,
-                diagnosticReports: _patientReports[cpf],
-                cpf: cpf,
+
+              // Verificar se é o último atendimento deste CPF para mostrar os exames
+              final isLastForThisCpf = index == _patients.length - 1 ||
+                  (index < _patients.length - 1 && _patientCpfs[index + 1] != cpf);
+
+              return Column(
+                children: [
+                  PatientCard(
+                    patient: _patients[index],
+                    index: index,
+                    cpf: cpf,
+                  ),
+                  // Mostrar exames apenas após o último atendimento de cada CPF
+                  if (isLastForThisCpf &&
+                      _patientReports[cpf] != null &&
+                      _patientReports[cpf]!.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      child: DiagnosticReportsCard(
+                        reports: _patientReports[cpf]!,
+                        cpf: cpf,
+                      ),
+                    ),
+                ],
               );
             },
           ),

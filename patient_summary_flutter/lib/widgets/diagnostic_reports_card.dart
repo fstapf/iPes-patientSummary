@@ -7,7 +7,7 @@ import '../services/api_service.dart';
 import 'pdf_viewer_dialog.dart';
 
 /// Widget para exibir lista de exames diagnósticos
-class DiagnosticReportsCard extends StatelessWidget {
+class DiagnosticReportsCard extends StatefulWidget {
   final List<DiagnosticReportData> reports;
   final String cpf;
 
@@ -18,85 +18,147 @@ class DiagnosticReportsCard extends StatelessWidget {
   });
 
   @override
+  State<DiagnosticReportsCard> createState() => _DiagnosticReportsCardState();
+}
+
+class _DiagnosticReportsCardState extends State<DiagnosticReportsCard>
+    with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _controller;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _rotationAnimation = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (reports.isEmpty) {
-      return Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    if (widget.reports.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.gray200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header - sempre visível e clicável
+          InkWell(
+            onTap: _toggleExpanded,
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(12),
+              bottom: _isExpanded ? Radius.zero : const Radius.circular(12),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFF8F9FA), AppColors.white],
+                ),
+                border: _isExpanded
+                    ? const Border(
+                        bottom: BorderSide(color: AppColors.gray100))
+                    : null,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Row(
                 children: [
-                  Icon(
-                    Icons.assignment,
-                    color: AppColors.primary,
-                    size: 24,
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Exames Realizados',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.gray900,
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.assignment,
+                    color: AppColors.gray700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Exames Realizados (${widget.reports.length})',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gray900,
+                      ),
+                    ),
+                  ),
+                  RotationTransition(
+                    turns: _rotationAnimation,
+                    child: const Icon(
+                      Icons.expand_more,
+                      color: AppColors.gray500,
+                      size: 32,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Nenhum exame encontrado',
-                style: TextStyle(
-                  color: AppColors.gray600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.assignment,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Exames Realizados (${reports.length})',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.gray900,
-                  ),
-                ),
-              ],
             ),
-            const SizedBox(height: 16),
-            ListView.separated(
+          ),
+
+          // Content - lista de exames (expandível)
+          if (_isExpanded)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: reports.length,
+              itemCount: widget.reports.length,
               separatorBuilder: (context, index) => const Divider(height: 24),
               itemBuilder: (context, index) {
-                final report = reports[index];
+                final report = widget.reports[index];
                 return _buildReportItem(context, report);
               },
+                ),
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -316,7 +378,7 @@ class DiagnosticReportsCard extends StatelessWidget {
       final binaryId = report.pdfUrl!.split('/').last;
 
       final apiService = ApiService();
-      final pdfBytesList = await apiService.fetchPdfBytes(binaryId, cpf);
+      final pdfBytesList = await apiService.fetchPdfBytes(binaryId, widget.cpf);
       final pdfBytes = Uint8List.fromList(pdfBytesList);
 
       print('✅ PDF carregado - ${pdfBytes.length} bytes');

@@ -105,7 +105,7 @@ class ApiService {
   }
 
   /// Busca o sumário do paciente pelo CPF
-  Future<PatientData> searchPatientByCpf(String cpf) async {
+  Future<List<PatientData>> searchPatientByCpf(String cpf) async {
     try {
       // Validar CPF
       if (cpf.isEmpty) {
@@ -138,7 +138,7 @@ class ApiService {
             headers: {
               'Authorization': 'Bearer $_accessToken',
               'Accept': 'application/fhir+json',
-              'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+              'subject-id': cpf,
             },
           ),
         );
@@ -148,14 +148,17 @@ class ApiService {
         print('📦 Bundle recebido: ${response.data.runtimeType}');
         print('📦 Bundle entries: ${response.data['entry']?.length ?? 0}');
 
-        final patientData = _processBundle(response.data as Map<String, dynamic>);
-        print('👤 Patient data processado: ID=${patientData.id}');
-        print('   - Conditions: ${patientData.conditions.length}');
-        print('   - Allergies: ${patientData.allergies.length}');
-        print('   - Procedures: ${patientData.procedures.length}');
-        print('   - Medications: ${patientData.medications.length}');
+        final patientDataList = _processBundle(response.data as Map<String, dynamic>);
+        print('👤 Total de atendimentos processados: ${patientDataList.length}');
+        for (var i = 0; i < patientDataList.length; i++) {
+          print('   Atendimento ${i + 1}: ID=${patientDataList[i].id}');
+          print('      - Conditions: ${patientDataList[i].conditions.length}');
+          print('      - Allergies: ${patientDataList[i].allergies.length}');
+          print('      - Procedures: ${patientDataList[i].procedures.length}');
+          print('      - Medications: ${patientDataList[i].medications.length}');
+        }
 
-        return patientData;
+        return patientDataList;
       } on DioException catch (e) {
         print('❌ Erro na busca: ${e.message}');
 
@@ -170,7 +173,7 @@ class ApiService {
               headers: {
                 'Authorization': 'Bearer $_accessToken',
                 'Accept': 'application/fhir+json',
-                'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+                'subject-id': cpf,
               },
             ),
           );
@@ -214,17 +217,9 @@ class ApiService {
   }
 
   /// Processa o bundle FHIR e extrai os dados do paciente
-  PatientData _processBundle(Map<String, dynamic> bundle) {
+  /// Retorna uma lista de PatientData, onde cada item representa um atendimento
+  List<PatientData> _processBundle(Map<String, dynamic> bundle) {
     print('🔄 Iniciando processamento do bundle...');
-
-    final patientData = <String, dynamic>{
-      'id': '',
-      'encounter': <String, dynamic>{},
-      'conditions': <Map<String, dynamic>>[],
-      'allergies': <Map<String, dynamic>>[],
-      'procedures': <Map<String, dynamic>>[],
-      'medications': <Map<String, dynamic>>[],
-    };
 
     if (bundle['entry'] == null) {
       throw Exception('Bundle inválido - propriedade entry não encontrada');
@@ -234,83 +229,141 @@ class ApiService {
     print('📋 Total de top-level entries: ${topLevelEntries.length}');
     print('📋 Bundle type: ${bundle['type']}');
 
-    // Processar transaction-response: cada entry contém um Bundle do tipo searchset
-    for (var i = 0; i < topLevelEntries.length; i++) {
-      final topLevelResource = topLevelEntries[i]['resource'] as Map<String, dynamic>?;
+    // Primeiro bundle (entry[0]) contém os Encounters
+    final encountersBundle = topLevelEntries[0]['resource'] as Map<String, dynamic>?;
+    if (encountersBundle == null || encountersBundle['entry'] == null) {
+      throw Exception('Bundle de Encounters não encontrado');
+    }
 
-      if (topLevelResource == null) continue;
+    final encounterEntries = encountersBundle['entry'] as List<dynamic>;
+    print('📋 Total de Encounters: ${encounterEntries.length}');
 
-      print('   [$i] Top-level resourceType: ${topLevelResource['resourceType']}');
+    // Coletar todos os recursos dos outros bundles e organizar por encounter
+    final resourcesByEncounter = <String, Map<String, dynamic>>{};
 
-      // Verificar se é um Bundle aninhado (searchset)
-      if (topLevelResource['resourceType'] == 'Bundle' &&
-          topLevelResource['type'] == 'searchset') {
+    // Processar os demais bundles (Observations, Conditions, AllergyIntolerance, Procedures, etc)
+    for (var i = 1; i < topLevelEntries.length; i++) {
+      final resourceBundle = topLevelEntries[i]['resource'] as Map<String, dynamic>?;
+      if (resourceBundle == null || resourceBundle['entry'] == null) continue;
 
-        final nestedEntries = topLevelResource['entry'] as List<dynamic>?;
-        if (nestedEntries == null) continue;
+      final entries = resourceBundle['entry'] as List<dynamic>?;
+      if (entries == null) continue;
 
-        print('      └─ Nested bundle com ${nestedEntries.length} entries');
+      for (final entry in entries) {
+        final resource = entry['resource'] as Map<String, dynamic>?;
+        if (resource == null) continue;
 
-        // Processar recursos dentro do bundle aninhado
-        for (final nestedEntry in nestedEntries) {
-          final resource = nestedEntry['resource'] as Map<String, dynamic>?;
-          if (resource == null) continue;
+        final resourceType = resource['resourceType'] as String;
 
-          final resourceType = resource['resourceType'] as String;
-          print('         └─ Resource: $resourceType');
+        // Extrair referência do encounter
+        String? encounterRef;
+        if (resource['encounter'] != null && resource['encounter']['reference'] != null) {
+          final fullRef = resource['encounter']['reference'] as String;
+          // Extrair apenas o ID (após "Encounter/")
+          encounterRef = fullRef.replaceFirst('Encounter/', '');
+        }
 
+        if (encounterRef != null) {
+          // Inicializar mapa para este encounter se não existir
+          if (!resourcesByEncounter.containsKey(encounterRef)) {
+            resourcesByEncounter[encounterRef] = {
+              'conditions': <Map<String, dynamic>>[],
+              'allergies': <Map<String, dynamic>>[],
+              'procedures': <Map<String, dynamic>>[],
+              'medications': <Map<String, dynamic>>[],
+              'weight': null,
+              'height': null,
+            };
+          }
+
+          // Adicionar recurso à categoria apropriada
           switch (resourceType) {
-            case 'Encounter':
-              print('✅ Encounter encontrado!');
-              patientData['encounter'] = resource;
+            case 'Observation':
+              // Verificar se é peso ou altura
+              final code = resource['code']?['coding']?[0]?['code'] as String?;
+              final value = resource['valueQuantity']?['value'];
 
-              // Extrair ID do atendimento (usar o ID do Encounter como ID principal)
-              if (resource['id'] != null) {
-                patientData['id'] = resource['id'] as String;
-                print('✅ ID do atendimento: ${patientData['id']}');
+              if (code == '29463-7' && value != null) {
+                // Peso (Body weight)
+                resourcesByEncounter[encounterRef]!['weight'] = (value is int) ? value.toDouble() : value as double;
+              } else if (code == '8302-2' && value != null) {
+                // Altura (Body height)
+                resourcesByEncounter[encounterRef]!['height'] = (value is int) ? value.toDouble() : value as double;
               }
               break;
-
             case 'Condition':
-              (patientData['conditions'] as List<Map<String, dynamic>>).add(resource);
+              (resourcesByEncounter[encounterRef]!['conditions'] as List<Map<String, dynamic>>).add(resource);
               break;
-
             case 'AllergyIntolerance':
-              (patientData['allergies'] as List<Map<String, dynamic>>).add(resource);
+              (resourcesByEncounter[encounterRef]!['allergies'] as List<Map<String, dynamic>>).add(resource);
               break;
-
             case 'Procedure':
-              (patientData['procedures'] as List<Map<String, dynamic>>).add(resource);
+              (resourcesByEncounter[encounterRef]!['procedures'] as List<Map<String, dynamic>>).add(resource);
               break;
-
             case 'MedicationRequest':
-              (patientData['medications'] as List<Map<String, dynamic>>).add(resource);
-              break;
-
-            case 'ClinicalImpression':
-              patientData['clinicalImpression'] = resource;
-              break;
-
-            case 'CarePlan':
-              patientData['carePlan'] = resource;
+              (resourcesByEncounter[encounterRef]!['medications'] as List<Map<String, dynamic>>).add(resource);
               break;
           }
         }
       }
     }
 
-    if (patientData['id'] == '') {
-      throw Exception('Não foi possível encontrar informações do atendimento no bundle');
+    // Criar PatientData para cada Encounter
+    final allPatientData = <PatientData>[];
+
+    for (var i = 0; i < encounterEntries.length; i++) {
+      final encounterResource = encounterEntries[i]['resource'] as Map<String, dynamic>?;
+      if (encounterResource == null) continue;
+
+      final encounterId = encounterResource['id'] as String?;
+      if (encounterId == null) continue;
+
+      print('📊 Processando Encounter $encounterId');
+
+      // Buscar recursos deste encounter
+      final encounterResources = resourcesByEncounter[encounterId] ?? {
+        'conditions': <Map<String, dynamic>>[],
+        'allergies': <Map<String, dynamic>>[],
+        'procedures': <Map<String, dynamic>>[],
+        'medications': <Map<String, dynamic>>[],
+        'weight': null,
+        'height': null,
+      };
+
+      // Criar uma cópia do encounterResource para adicionar peso e altura
+      final encounterWithVitals = Map<String, dynamic>.from(encounterResource);
+      encounterWithVitals['weight'] = encounterResources['weight'];
+      encounterWithVitals['height'] = encounterResources['height'];
+
+      final patientData = <String, dynamic>{
+        'id': encounterId,
+        'encounter': encounterWithVitals,
+        'conditions': encounterResources['conditions']!,
+        'allergies': encounterResources['allergies']!,
+        'procedures': encounterResources['procedures']!,
+        'medications': encounterResources['medications']!,
+      };
+
+      print('   - Conditions: ${(patientData['conditions'] as List).length}');
+      print('   - Allergies: ${(patientData['allergies'] as List).length}');
+      print('   - Procedures: ${(patientData['procedures'] as List).length}');
+      print('   - Medications: ${(patientData['medications'] as List).length}');
+      if (encounterResources['weight'] != null) {
+        print('   - Weight: ${encounterResources['weight']} kg');
+      }
+      if (encounterResources['height'] != null) {
+        print('   - Height: ${encounterResources['height']} cm');
+      }
+
+      allPatientData.add(PatientData.fromJson(patientData));
     }
 
-    print('📊 Recursos processados:');
-    print('   - ID do atendimento: ${patientData['id']}');
-    print('   - Conditions: ${(patientData['conditions'] as List).length}');
-    print('   - Allergies: ${(patientData['allergies'] as List).length}');
-    print('   - Procedures: ${(patientData['procedures'] as List).length}');
-    print('   - Medications: ${(patientData['medications'] as List).length}');
+    if (allPatientData.isEmpty) {
+      throw Exception('Não foi possível encontrar informações de atendimento no bundle');
+    }
 
-    return PatientData.fromJson(patientData);
+    print('✅ Total de atendimentos processados: ${allPatientData.length}');
+    return allPatientData;
   }
 
   /// Busca exames diagnósticos do paciente pelo CPF
@@ -347,7 +400,7 @@ class ApiService {
             headers: {
               'Authorization': 'Bearer $_accessToken',
               'Accept': 'application/fhir+json',
-              'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+              'subject-id': cpf,
             },
           ),
         );
@@ -370,7 +423,7 @@ class ApiService {
               headers: {
                 'Authorization': 'Bearer $_accessToken',
                 'Accept': 'application/fhir+json',
-                'subject-id': cpf,  // Usar o CPF do paciente que está sendo consultado
+                'subject-id': cpf,
               },
             ),
           );
@@ -447,7 +500,7 @@ class ApiService {
           options: Options(
             headers: {
               'Authorization': 'Bearer $_accessToken',
-              'Accept': 'application/fhir+json',  // Header necessário para obter o JSON com base64
+              'Accept': 'application/fhir+json',
               'subject-id': cpf,
             },
           ),
