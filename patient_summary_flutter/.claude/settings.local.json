@@ -7,7 +7,10 @@
       "Bash(flutter build:*)",
       "Bash($env:MSYS_NO_PATHCONV=1)",
       "Bash(export MSYS_NO_PATHCONV=1)",
-      "Read(//d/projetosVS/iPes-patientSummary/**)"
+      "Read(//d/projetosVS/iPes-patientSummary/**)",
+      "Bash(flutter:*)",
+      "Bash(rd:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
